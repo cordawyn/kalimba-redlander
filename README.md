@@ -1,6 +1,6 @@
 # Kalimba::Persistence::Redlander
 
-Redlander adapter for Kalimba. It provides the RDF storage backend for Kalimba.
+Redlander adapter for [Kalimba](https://github.com/cordawyn/kalimba). It provides the RDF storage backend for Kalimba.
 
 ## Installation
 
