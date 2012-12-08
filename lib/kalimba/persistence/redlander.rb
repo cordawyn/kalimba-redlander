@@ -25,7 +25,7 @@ module Kalimba
               yield self.for(binding["subject"].uri)
             end
           else
-            Kalimba.repository.query(q).map { |binding| self.for(binding["subject"].uri.fragment) }
+            enum_for(:find_each, options)
           end
         end
 
