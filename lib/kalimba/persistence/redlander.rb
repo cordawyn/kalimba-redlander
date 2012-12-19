@@ -3,12 +3,36 @@ require "kalimba/persistence"
 
 module Kalimba
   module Persistence
-    def self.backend
-      Kalimba::Persistence::Redlander
-    end
+    # Mapping of database options from Rails' database.yml
+    # to those that Redland::Model expects
+    REPOSITORY_OPTIONS_MAPPING = {
+      "adapter" => :storage,
+      "database" => :name
+    }
 
-    def self.create_repository(options = {})
-      ::Redlander::Model.new(options)
+    class << self
+      def backend
+        Kalimba::Persistence::Redlander
+      end
+
+      def repository(options = {})
+        ::Redlander::Model.new(remap_options(options))
+      end
+
+      private
+
+      def remap_options(options = {})
+        options = Hash[options.map {|k, v| [REPOSITORY_OPTIONS_MAPPING[k] || k, v] }].symbolize_keys
+        options[:storage] =
+          case options[:storage]
+          when "sqlite3"
+            "sqlite"
+          else
+            options[:storage]
+          end
+
+        options
+      end
     end
 
     # Redlander-based persistence module
