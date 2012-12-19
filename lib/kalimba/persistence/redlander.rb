@@ -22,7 +22,7 @@ module Kalimba
           q = "SELECT ?subject WHERE { #{resource_definition} . #{attributes_to_graph_query(attributes)} }"
           if block_given?
             Kalimba.repository.query(q) do |binding|
-              yield self.for(binding["subject"].uri)
+              yield self.for(binding["subject"].uri.fragment)
             end
           else
             enum_for(:find_each, options)
@@ -58,9 +58,15 @@ module Kalimba
             if value.is_a?(Enumerable)
               value.map { |v| attributes_to_graph_query(name => v) }.join(" . ")
             else
-              [ "?subject",
-                ::Redlander::Node.new(properties[name][:predicate]),
-                ::Redlander::Node.new(value) ].join(" ")
+              if name == "id"
+                value = base_uri.dup.tap {|u| u.fragment = value }
+                [ ::Redlander::Node.new(value), ::Redlander::Node.new(NS::RDF['type']), ::Redlander::Node.new(type) ].join(" ")
+              else
+                [ "?subject",
+                  ::Redlander::Node.new(properties[name][:predicate]),
+                  ::Redlander::Node.new(value)
+                ].join(" ")
+              end
             end
           }.join(" . ")
         end
