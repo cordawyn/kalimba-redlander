@@ -50,6 +50,14 @@ module Kalimba
           end
         end
 
+        def count(attributes = {})
+          q = "SELECT (COUNT(?subject) AS _count) WHERE { #{resource_definition} . #{attributes_to_graph_query(attributes.stringify_keys)} }"
+
+          # using SPARQL 1.1, because SPARQL 1.0 does not support COUNT
+          Kalimba.repository.query(q, :language => "sparql")[0]["_count"].value
+        end
+
+
         private
 
         def resource_definition
