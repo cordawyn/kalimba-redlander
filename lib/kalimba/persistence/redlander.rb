@@ -139,7 +139,7 @@ module Kalimba
 
       def store_attributes(options = {})
         if new_record?
-          attributes.all? { |name, value| value.nil? || store_attribute(name, options) }
+          attributes.all? { |name, value| value.blank? || store_attribute(name, options) }
         else
           changes.all? { |name, _| store_attribute(name, options) }
         end
