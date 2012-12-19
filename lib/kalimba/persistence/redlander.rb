@@ -228,6 +228,10 @@ module Kalimba
         if value
           statement = ::Redlander::Statement.new(:subject => subject, :predicate => predicate, :object => ::Redlander::Node.new(value))
           Kalimba.repository.statements.add(statement)
+        else
+          # if value turned into nil or false upon conversion/typecasting to RDF,
+          # do not count this as an error
+          true
         end
       end
 
