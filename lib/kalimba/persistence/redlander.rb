@@ -19,7 +19,10 @@ module Kalimba
       module ClassMethods
         def find_each(options = {})
           attributes = (options[:conditions] || {}).stringify_keys
+
           q = "SELECT ?subject WHERE { #{resource_definition} . #{attributes_to_graph_query(attributes)} }"
+          q << " LIMIT #{options[:limit]}" if options[:limit]
+
           if block_given?
             Kalimba.repository.query(q) do |binding|
               yield self.for(binding["subject"].uri.fragment)
