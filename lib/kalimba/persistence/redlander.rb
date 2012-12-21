@@ -137,6 +137,15 @@ module Kalimba
 
       private
 
+      def read_attribute(name, *args)
+        if changed.include?(name) || !persisted?
+          super
+        else
+          attributes[name] = retrieve_attribute(name)
+        end
+      end
+      alias_method :attribute, :read_attribute
+
       def store_attributes(options = {})
         if new_record?
           attributes.all? { |name, value| value.blank? || store_attribute(name, options) }
