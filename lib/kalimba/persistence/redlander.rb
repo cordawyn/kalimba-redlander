@@ -197,7 +197,7 @@ module Kalimba
 
       def type_cast_from_rdf(value, datatype)
         klass = rdfs_class_by_datatype(datatype)
-        klass ? klass.for(value) : value
+        klass ? klass.for(value.fragment) : value
       end
 
       def update_types_data
@@ -245,7 +245,7 @@ module Kalimba
       end
 
       def rdfs_class_by_datatype(datatype)
-        self.class.rdfs_ancestors.detect {|a| a.type == datatype }
+        RDFSClass.subclasses.detect {|a| a.type == datatype }
       end
     end
   end
