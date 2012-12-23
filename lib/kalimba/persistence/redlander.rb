@@ -196,8 +196,26 @@ module Kalimba
       end
 
       def type_cast_from_rdf(value, datatype)
-        klass = rdfs_class_by_datatype(datatype)
-        klass ? klass.for(value.fragment) : value
+        if value.is_a?(URI)
+          klass = rdfs_class_by_datatype(datatype)
+          if klass
+            klass.for(value.fragment)
+          else
+            anonymous_class_from(value, datatype).for(value.fragment)
+          end
+        else
+          value
+        end
+      end
+
+      def anonymous_class_from(uri, datatype)
+        (uri = uri.dup).fragment = nil
+        Class.new(Kalimba::Resource).tap do |klass|
+          klass.class_eval do
+            base_uri uri
+            type datatype
+          end
+        end
       end
 
       def update_types_data
