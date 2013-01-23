@@ -69,8 +69,10 @@ module Kalimba
         end
 
         def destroy_all
-          Kalimba.repository.statements.each(:predicate => NS::RDF["type"], :object => type) do |statement|
-            Kalimba.repository.statements.delete_all(:subject => statement.subject)
+          Kalimba.repository.transaction do
+            Kalimba.repository.statements.each(:predicate => NS::RDF["type"], :object => type) do |statement|
+              Kalimba.repository.statements.delete_all(:subject => statement.subject)
+            end
           end
         end
 
@@ -123,7 +125,9 @@ module Kalimba
 
       def destroy
         if !destroyed? && persisted?
-          Kalimba.repository.statements.delete_all(:subject => subject)
+          Kalimba.repository.transaction do
+            Kalimba.repository.statements.delete_all(:subject => subject)
+          end
           super
         else
           false
@@ -132,7 +136,9 @@ module Kalimba
 
       def save(options = {})
         @subject ||= generate_subject
-        store_attributes(options) && update_types_data && super
+        Kalimba.repository.transaction do
+          store_attributes(options) && update_types_data && super
+        end
       end
 
       private
