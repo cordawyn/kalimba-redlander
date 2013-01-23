@@ -88,7 +88,11 @@ module Kalimba
         private
 
         def resource_definition
-          [ "?subject", ::Redlander::Node.new(NS::RDF['type']), ::Redlander::Node.new(type) ].join(" ")
+          if type
+            [ "?subject", ::Redlander::Node.new(NS::RDF['type']), ::Redlander::Node.new(type) ].join(" ")
+          else
+            raise KalimbaError, "resource is missing type declaration"
+          end
         end
 
         def attributes_to_graph_query(attributes = {})
