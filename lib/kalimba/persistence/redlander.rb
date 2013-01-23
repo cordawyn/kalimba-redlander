@@ -48,6 +48,8 @@ module Kalimba
             q = "SELECT ?subject WHERE { #{resource_definition} . #{attributes_to_graph_query(attributes)} }"
             q << " LIMIT #{options[:limit]}" if options[:limit]
 
+            logger.debug(q) if logger
+
             Kalimba.repository.query(q) do |binding|
               yield self.for(binding["subject"].uri.fragment)
             end
@@ -59,6 +61,7 @@ module Kalimba
         def exist?(attributes = {})
           attributes = attributes.stringify_keys
           q = "ASK { #{resource_definition} . #{attributes_to_graph_query(attributes)} }"
+          logger.debug(q) if logger
           Kalimba.repository.query(q)
         end
 
@@ -69,6 +72,7 @@ module Kalimba
         end
 
         def destroy_all
+          logger.debug("destroying all #{self.name.pluralize}") if logger
           Kalimba.repository.transaction do
             Kalimba.repository.statements.each(:predicate => NS::RDF["type"], :object => type) do |statement|
               Kalimba.repository.statements.delete_all(:subject => statement.subject)
@@ -78,6 +82,7 @@ module Kalimba
 
         def count(attributes = {})
           q = "SELECT (COUNT(?subject) AS _count) WHERE { #{resource_definition} . #{attributes_to_graph_query(attributes.stringify_keys)} }"
+          logger.debug(q) if logger
 
           # using SPARQL 1.1, because SPARQL 1.0 does not support COUNT
           c = Kalimba.repository.query(q, :language => "sparql")[0]
@@ -123,6 +128,7 @@ module Kalimba
       end
 
       def reload
+        logger.debug("reloading #{self.inspect}") if logger
         self.class.properties.each { |name, _| attributes[name] = retrieve_attribute(name) }
         self
       end
@@ -130,6 +136,7 @@ module Kalimba
       def destroy
         if !destroyed? && persisted?
           Kalimba.repository.transaction do
+            logger.debug("destroying #{self.inspect}") if logger
             Kalimba.repository.statements.delete_all(:subject => subject)
           end
           super
@@ -140,6 +147,7 @@ module Kalimba
 
       def save(options = {})
         @subject ||= generate_subject
+        logger.debug("saving #{self.inspect}") if logger
         Kalimba.repository.transaction do
           store_attributes(options) && update_types_data && super
         end
