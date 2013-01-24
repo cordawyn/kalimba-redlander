@@ -58,6 +58,11 @@ module Kalimba
           end
         end
 
+        def find_by_id(id_value)
+          record = self.for(id_value)
+          record.new_record? ? nil : record
+        end
+
         def exist?(attributes = {})
           attributes = attributes.stringify_keys
           q = "ASK { #{resource_definition} . #{attributes_to_graph_query(attributes)} }"
@@ -105,15 +110,10 @@ module Kalimba
             if value.is_a?(Enumerable)
               value.map { |v| attributes_to_graph_query(name => v) }.join(" . ")
             else
-              if name == "id"
-                value = base_uri.dup.tap {|u| u.fragment = value }
-                [ ::Redlander::Node.new(value), ::Redlander::Node.new(NS::RDF['type']), ::Redlander::Node.new(type) ].join(" ")
-              else
-                [ "?subject",
-                  ::Redlander::Node.new(properties[name][:predicate]),
-                  ::Redlander::Node.new(value)
-                ].join(" ")
-              end
+              [ "?subject",
+                ::Redlander::Node.new(properties[name][:predicate]),
+                ::Redlander::Node.new(value)
+              ].join(" ")
             end
           }.join(" . ")
         end
