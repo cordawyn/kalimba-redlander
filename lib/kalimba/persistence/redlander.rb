@@ -172,7 +172,7 @@ module Kalimba
             changed_attributes[name] = orig_value
           end
         end
-        attributes[name] = @cached_attributes[name] = value
+        attributes[name] = value
       end
 
       def store_attributes(options = {})
