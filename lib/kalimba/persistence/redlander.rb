@@ -164,6 +164,17 @@ module Kalimba
       end
       alias_method :attribute, :read_attribute
 
+      def write_attribute(name, value)
+        unless changed_attributes.include?(name)
+          orig_value = read_attribute(name)
+          unless value == orig_value
+            orig_value = orig_value.duplicable? ? orig_value.clone : orig_value
+            changed_attributes[name] = orig_value
+          end
+        end
+        attributes[name] = @cached_attributes[name] = value
+      end
+
       def store_attributes(options = {})
         if new_record?
           attributes.all? { |name, value| value.blank? || store_attribute(name, options) }
