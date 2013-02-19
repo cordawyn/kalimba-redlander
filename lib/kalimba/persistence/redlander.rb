@@ -149,7 +149,7 @@ module Kalimba
         @subject ||= generate_subject
         logger.debug("saving #{self.inspect}") if logger
         Kalimba.repository.transaction do
-          store_attributes(options) && update_types_data && super
+          store_type && store_attributes(options) && super
         end
       end
 
@@ -173,6 +173,11 @@ module Kalimba
           end
         end
         attributes[name] = value
+      end
+
+      def store_type
+        st = ::Redlander::Statement.new(subject: subject, predicate: NS::RDF["type"], object: self.class.type)
+        Kalimba.repository.statements.add(st)
       end
 
       def store_attributes(options = {})
@@ -247,39 +252,16 @@ module Kalimba
         end
       end
 
-      def update_types_data
-        existing = self.class.types.map do |t|
-          ::Redlander::Statement.new(:subject => subject, :predicate => NS::RDF["type"], :object => t)
-        end
-        deleting = []
-
-        Kalimba.repository.statements.each(:subject => subject, :predicate => NS::RDF["type"]) do |statement|
-          if existing.include?(statement)
-            existing.delete(statement)
-          else
-            deleting << statement
-          end
-        end
-
-        existing.all? { |statement| Kalimba.repository.statements.add(statement) } &&
-          deleting.all? { |statement| Kalimba.repository.statements.delete(statement) }
-      end
-
       def store_single_value(value, predicate, datatype, options = {})
         value =
-          if value.respond_to?(:to_rdf)
-            if value.is_a?(Kalimba::Resource)
-              # avoid cyclic saves
-              if options[:parent_subject] != value.subject
-                value.save(:parent_subject => subject) if value.changed? || value.new_record?
-              else
-                # do not count skipped cycled saves as errors
-                true
-              end
-            end
-            value.to_rdf
+          if value.is_a?(Kalimba::Resource)
+            store_single_resource(value, options)
           else
-            type_cast_to_rdf(value, datatype)
+            if value.respond_to?(:to_rdf)
+              value.to_rdf
+            else
+              type_cast_to_rdf(value, datatype)
+            end
           end
         if value
           statement = ::Redlander::Statement.new(:subject => subject, :predicate => predicate, :object => ::Redlander::Node.new(value))
@@ -291,8 +273,20 @@ module Kalimba
         end
       end
 
+      def store_single_resource(resource, options)
+        # avoid cyclic saves
+        if options[:parent_subject] != resource.subject &&
+            must_be_persisted?(resource)
+          resource.save(:parent_subject => subject)
+        end
+      end
+
+      def must_be_persisted?(resource)
+        resource.changed? || resource.new_record?
+      end
+
       def rdfs_class_by_datatype(datatype)
-        RDFSClass.subclasses.detect {|a| a.type == datatype }
+        Kalimba::Resource.descendants.detect {|a| a.type == datatype }
       end
     end
   end
